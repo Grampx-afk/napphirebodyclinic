@@ -1,0 +1,9 @@
+{
+  "name": "napphire-body-clinic",
+  "version": "1.0.0",
+  "description": "Napphire Body Clinic website",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "npx serve ."
+  }
+}
