@@ -315,13 +315,17 @@ footer{background:#100d0a;border-top:1px solid var(--border);padding:3.5rem 6% 2
   50% { box-shadow: 0 4px 32px rgba(37,211,102,.75), 0 0 0 8px rgba(37,211,102,.12); }
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
-  // Vercel injects environment variables here at build time
-  window.__ENV__ = {
-    SUPABASE_URL: 'https://qzfijykgfhfmjufvpzuc.supabase.co',
-    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6ZmlqeWtnZmhmbWp1ZnZwenVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNDkzOTIsImV4cCI6MjA4ODkyNTM5Mn0.zGJHtDeT8O3cP6Wm9QWxuBXcaYRemGASypn4GJD45tw'
-  };
+  // ── EmailJS config ──────────────────────────────────────────────
+  // Sign up free at https://www.emailjs.com then replace these 3 values:
+  const EJS_PUBLIC_KEY   = 'YOUR_PUBLIC_KEY';   // Account → API Keys
+  const EJS_SERVICE_ID   = 'YOUR_SERVICE_ID';   // Email Services tab
+  const EJS_TEMPLATE_ID  = 'YOUR_TEMPLATE_ID';  // Email Templates tab
+  // ───────────────────────────────────────────────────────────────
+  emailjs.init({ publicKey: EJS_PUBLIC_KEY });
 </script>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 
@@ -466,7 +470,7 @@ footer{background:#100d0a;border-top:1px solid var(--border);padding:3.5rem 6% 2
       <div class="contact-info-items">
         <div class="contact-item reveal delay-1"><div class="contact-item-icon">📍</div><div><div class="contact-item-label">Location</div><div class="contact-item-value">Emagbadun Building, Iwo Rd,<br/>Beside Bishop Phillips,<br/>Ibadan 200223, Oyo State</div></div></div>
         <div class="contact-item reveal delay-2"><div class="contact-item-icon">📞</div><div><div class="contact-item-label">Phone</div><div class="contact-item-value"><a href="tel:+2349047886972">+234 904 788 6972</a></div></div></div>
-        <div class="contact-item reveal delay-2"><div class="contact-item-icon">✉️</div><div><div class="contact-item-label">Email</div><div class="contact-item-value"><a href="mailto:enquiry@napphire.com.ng">enquiry@napphire.com.ng</a></div></div></div>
+        <div class="contact-item reveal delay-2"><div class="contact-item-icon">✉️</div><div><div class="contact-item-label">Email</div><div class="contact-item-value"><a id="emailLink1" href="#">enquiry&#64;napphire&#46;com&#46;ng</a></div></div></div>
         <div class="contact-item reveal delay-3"><div class="contact-item-icon">🕐</div><div><div class="contact-item-label">Business Hours</div><div class="contact-item-value">Monday – Saturday: 9:00am – 5:00pm<br/><span style="color:rgba(245,237,224,.3)">Sunday: Closed</span></div></div></div>
       </div>
       <div class="social-links reveal">
@@ -546,7 +550,7 @@ footer{background:#100d0a;border-top:1px solid var(--border);padding:3.5rem 6% 2
     <div>
       <div class="footer-col-title">Contact</div>
       <div class="footer-col-item"><a href="tel:+2349047886972">+234 904 788 6972</a></div>
-      <div class="footer-col-item"><a href="mailto:enquiry@napphire.com.ng">enquiry@napphire.com.ng</a></div>
+      <div class="footer-col-item"><a id="emailLink2" href="#">enquiry&#64;napphire&#46;com&#46;ng</a></div>
       <div class="footer-col-item" style="font-size:.75rem;max-width:220px;margin-top:.4rem;line-height:1.7;color:rgba(245,237,224,.25)">Emagbadun Building, Iwo Rd, Ibadan 200223, Oyo</div>
     </div>
   </div>
@@ -601,66 +605,57 @@ const observer = new IntersectionObserver((entries) => {
 }, {threshold: 0.1, rootMargin: '0px 0px -40px 0px'});
 reveals.forEach(r => observer.observe(r));
 
-// FORM
+// FORM — sends booking email via EmailJS
 document.getElementById('bookingForm').addEventListener('submit', async function(e) {
   e.preventDefault();
 
   const btn = this.querySelector('.form-submit');
-  btn.textContent = 'Submitting...';
+  btn.textContent = 'Sending...';
   btn.disabled = true;
 
-  const SUPABASE_URL = window.__ENV__?.SUPABASE_URL || '';
-  const SUPABASE_ANON_KEY = window.__ENV__?.SUPABASE_ANON_KEY || '';
-
   const fields = this.querySelectorAll('input, select, textarea');
-  const data = {
+  const templateParams = {
     first_name:     fields[0].value.trim(),
     last_name:      fields[1].value.trim(),
     phone:          fields[2].value.trim(),
-    email:          fields[3].value.trim(),
+    email:          fields[3].value.trim() || 'Not provided',
     service:        fields[4].value,
     preferred_date: fields[5].value,
     preferred_time: fields[6].value,
-    notes:          fields[7].value.trim(),
+    notes:          fields[7].value.trim() || 'None',
+    to_email:       'bahdboisbmola@gmail.com',
   };
 
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify(data)
-    });
+    await emailjs.send(EJS_SERVICE_ID, EJS_TEMPLATE_ID, templateParams);
 
-    if (res.ok || res.status === 201) {
-      this.style.display = 'none';
-      const msg = document.getElementById('successMsg');
-      msg.style.display = 'block';
-      setTimeout(() => {
-        msg.style.display = 'none';
-        this.style.display = 'block';
-        this.reset();
-        btn.textContent = 'Request Appointment';
-        btn.disabled = false;
-      }, 5000);
-    } else {
-      const err = await res.json();
-      alert('Something went wrong. Please try again or call us directly.');
-      console.error('Supabase error:', err);
+    this.style.display = 'none';
+    const msg = document.getElementById('successMsg');
+    msg.style.display = 'block';
+    setTimeout(() => {
+      msg.style.display = 'none';
+      this.style.display = 'block';
+      this.reset();
       btn.textContent = 'Request Appointment';
       btn.disabled = false;
-    }
+    }, 5000);
+
   } catch (err) {
-    alert('Network error. Please check your connection and try again.');
-    console.error(err);
+    alert('Something went wrong. Please call us directly on +234 904 788 6972.');
+    console.error('EmailJS error:', err);
     btn.textContent = 'Request Appointment';
     btn.disabled = false;
   }
 });
+
+// Set email links at runtime (bypasses Cloudflare email obfuscation)
+(function(){
+  var u='enquiry',d='napphire.com.ng',m='mailto:'+u+'@'+d;
+  var l1=document.getElementById('emailLink1');
+  var l2=document.getElementById('emailLink2');
+  if(l1) l1.href=m;
+  if(l2) l2.href=m;
+})();
 
 // MIN DATE
 const dateInput = document.querySelector('input[type="date"]');
